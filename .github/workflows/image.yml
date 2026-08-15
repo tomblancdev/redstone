@@ -1,0 +1,39 @@
+# ⚡ the kernel as an OCI image — pushed to ghcr.io on every release tag.
+# Reused by release-please.yml (workflow_call) because tags created with
+# GITHUB_TOKEN don't trigger this workflow's own tag event; the dispatch
+# form exists for rebuilding a tag by hand.
+name: image
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "existing tag to build (e.g. v0.2.0)"
+        required: true
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+      - name: login to ghcr
+        run: echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: build + push (amd64 + arm64)
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          docker buildx create --use
+          docker buildx build --platform linux/amd64,linux/arm64 --push \
+            -t "ghcr.io/${{ github.repository }}:${TAG#v}" \
+            -t "ghcr.io/${{ github.repository }}:latest" .
