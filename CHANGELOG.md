@@ -6,6 +6,26 @@ write them for readers. Versioning is [SemVer](https://semver.org): while
 0.x, anything may change **except** the wire namespace `redstone.core.v1`
 (breaking wire changes go to a `v2` package, at any version).
 
+## [0.2.0](https://github.com/tomblancdev/redstone/compare/v0.1.0...v0.2.0) (2026-08-15)
+
+
+### ⚡ Features
+
+* one-line installers — curl|sh and irm|iex, version-pinnable ([d9ce3c5](https://github.com/tomblancdev/redstone/commit/d9ce3c5983e4b135b5ad042183eed019a6fb3051))
+* ship the kernel as an OCI image to ghcr.io on release ([3d23af4](https://github.com/tomblancdev/redstone/commit/3d23af44ca85de4ea2d5081f39753dfc102f3e6e))
+
+
+### 📖 Docs
+
+* install & update guide — binary on PATH first, docker second ([031d378](https://github.com/tomblancdev/redstone/commit/031d378499fd8723424fa798eccf80086c9aa154))
+
+
+### 🤖 CI
+
+* dependabot commits arrive conventional (chore + scope) ([bb730b3](https://github.com/tomblancdev/redstone/commit/bb730b3979f43082442de67ac0a345bfae4ae795))
+* dependabot watches sdk/js npm deps too ([dceec88](https://github.com/tomblancdev/redstone/commit/dceec88ce01407fda8cf77cac0505f82d875c7c5))
+* wire-breaking gate works on PRs — materialize the base branch ref ([ff58154](https://github.com/tomblancdev/redstone/commit/ff58154f8338416ad36711df45be6d5b86859b4c))
+
 ## [0.1.0] — 2026-08-15
 
 The first powered circuit. ⚡ (Hand-written; everything after this is
