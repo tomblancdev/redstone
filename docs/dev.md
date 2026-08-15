@@ -30,7 +30,7 @@ dev.sh               the task runner — every task in a container
 ## Build — the gate is not optional
 
 ```sh
-docker run --rm -v "$PWD:/src" -w /src -e CGO_ENABLED=0 golang:1.24-alpine \
+docker run --rm -v "$PWD:/src" -w /src -e CGO_ENABLED=0 golang:1.25-alpine \
   sh -c "go vet ./... && go test ./... && \
          go build -trimpath -ldflags '-s -w' -o bin/redstone ./cmd/redstone"
 ```

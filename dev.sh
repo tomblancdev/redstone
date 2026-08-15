@@ -3,7 +3,7 @@
 # installed on the host. Works from Git Bash (Windows), Linux, macOS.
 set -eu
 
-GO_IMG=golang:1.24-alpine
+GO_IMG=golang:1.25-alpine
 BUF_IMG=bufbuild/buf:1.71.0
 
 # Git Bash mangles /paths in docker args; pwd -W gives the Windows form there.
