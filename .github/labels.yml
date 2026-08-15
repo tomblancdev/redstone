@@ -1,0 +1,64 @@
+# ⚡ labels-as-code — THIS file is the truth; the labels workflow syncs
+# GitHub to it (unlisted labels get deleted, so everything lives here,
+# including labels other bots depend on).
+# Names stay canonical (tooling parses them); descriptions get the sparks.
+
+# --- semantic ---
+- name: bug
+  color: c62828
+  description: "🧨 a circuit that should power, doesn't"
+- name: enhancement
+  color: e6a817
+  description: "⚡ a new contraption"
+- name: documentation
+  color: 1e56b0
+  description: "📖 docs, specs, examples"
+- name: question
+  color: 7b1fa2
+  description: "how does this wire up?"
+- name: security
+  color: b71c1c
+  description: "see SECURITY.md — private reports first"
+
+# --- areas (mirror the commit scopes; PRs get these automatically by path) ---
+- name: "area: kernel"
+  color: 455a64
+  description: "cmd/redstone — bind, verify, validate, graph, cli"
+- name: "area: wire"
+  color: 263238
+  description: "proto/ — redstone.core.v1 is frozen; additive only"
+- name: "area: sdk"
+  color: 00695c
+  description: "sdk/ — micro or failing"
+- name: "area: docs"
+  color: 5d4037
+  description: "docs/, README, schemas"
+- name: "area: ci"
+  color: 546e7a
+  description: "workflows, hooks, dev.sh"
+
+# --- process (bots + triage; must survive the sync) ---
+- name: dependencies
+  color: 0366d6
+  description: "🤖 dependabot's weekly rounds"
+- name: "autorelease: pending"
+  color: ededed
+  description: "release-please: the next circuit, waiting to be merged"
+- name: "autorelease: tagged"
+  color: ededed
+  description: "release-please: shipped"
+- name: good first issue
+  color: 2e7d32
+  description: "a small, well-lit circuit to start with"
+- name: help wanted
+  color: 33691e
+  description: "extra hands welcome"
+- name: wontfix
+  color: 9e9e9e
+  description: "deliberate — usually policy #1 (it's a brick, not a kernel patch)"
+- name: duplicate
+  color: 9e9e9e
+  description: "already on the graph"
+- name: invalid
+  color: 9e9e9e
+  description: "doesn't power as reported"

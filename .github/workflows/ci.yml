@@ -1,0 +1,39 @@
+# ⚡ the core gate — runs ONLY when Go code changes (kernel, sdk/go, gen).
+# Docs, changelog, py/js SDK edits don't spin a Go toolchain for nothing.
+name: ci
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - ".github/workflows/ci.yml"
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - name: gofmt
+        run: |
+          bad="$(gofmt -l . | grep -v '^gen/' || true)"
+          [ -z "$bad" ] || { echo "$bad"; echo "🧨 gofmt: fix the files above"; exit 1; }
+      - name: vet + test
+        run: go vet ./... && go test ./...
+      - name: cross-build
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          GOOS=linux  GOARCH=amd64 go build -trimpath -ldflags '-s -w' -o bin/redstone-linux-amd64 ./cmd/redstone
+          GOOS=linux  GOARCH=arm64 go build -trimpath -ldflags '-s -w' -o bin/redstone-linux-arm64 ./cmd/redstone
+          GOOS=windows GOARCH=amd64 go build -trimpath -ldflags '-s -w' -o bin/redstone-windows-amd64.exe ./cmd/redstone

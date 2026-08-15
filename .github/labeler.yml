@@ -1,0 +1,22 @@
+# ⚡ auto-labels PRs by the paths they touch (actions/labeler v5).
+# Mirrors the CI path filters — a PR's labels tell you which gates it runs.
+
+"area: kernel":
+  - changed-files:
+      - any-glob-to-any-file: ["cmd/**", "gen/**", "go.mod", "go.sum"]
+
+"area: wire":
+  - changed-files:
+      - any-glob-to-any-file: ["proto/**"]
+
+"area: sdk":
+  - changed-files:
+      - any-glob-to-any-file: ["sdk/**"]
+
+"area: docs":
+  - changed-files:
+      - any-glob-to-any-file: ["docs/**", "README.md", "CLAUDE.md", "schemas/**", "assets/**"]
+
+"area: ci":
+  - changed-files:
+      - any-glob-to-any-file: [".github/**", ".githooks/**", "dev.sh", "scripts/**"]

@@ -1,0 +1,5 @@
+# LF everywhere, forever — ends the CRLF warning era.
+* text=auto eol=lf
+*.go text eol=lf
+*.sh text eol=lf
+bin/** binary

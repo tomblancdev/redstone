@@ -1,0 +1,35 @@
+# ⚡ the wire — runs ONLY when proto/ changes. Lint, breaking gate (PRs),
+# and stub-sync: an edited proto with stale committed stubs fails here.
+name: proto
+on:
+  push:
+    branches: [main]
+    paths:
+      - "proto/**"
+      - ".github/workflows/proto.yml"
+  pull_request:
+    paths:
+      - "proto/**"
+      - ".github/workflows/proto.yml"
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: bufbuild/buf-setup-action@v1
+      - name: lint
+        working-directory: proto
+        run: buf lint
+      - name: breaking (the wire is frozen)
+        if: github.event_name == 'pull_request'
+        working-directory: proto
+        run: buf breaking --against "../.git#branch=${{ github.base_ref }},subdir=proto"
+      - name: stubs in sync (gen/ and sdk/py/_gen match the proto)
+        working-directory: proto
+        run: |
+          buf generate
+          git diff --exit-code ../gen ../sdk/py/redstone_sdk/_gen || {
+            echo "🧨 stubs out of date — run ./dev.sh proto and commit the result"; exit 1; }

@@ -1,0 +1,170 @@
+# ============================================================================
+# STACK SPEC — v1 CANDIDATE (complete, no open forks; lock on your read)
+# ============================================================================
+# A stack is a folder:
+#   <stack>/compose.yaml   the INSIDE — containers, env, instantiation. Docker's job.
+#   <stack>/stack.yaml     the EDGES — what it GIVES the fleet, what it USES.
+# The registry is the collection of stack.yaml files. The stack's name is its
+# folder/file name (docker-style; renaming the file renames the stack).
+# Names everywhere: [A-Za-z0-9][A-Za-z0-9_-]*
+# ============================================================================
+
+version: 1                     # required; the format's own evolution guard
+
+# ----------------------------------------------------------------------------
+# GIVES — what this stack exports. Only gives are fleet-visible; everything
+# else in the stack is invisible outside it (no expose/internal flags needed).
+# Give-names are the fleet names, chosen here like port numbers; a clash
+# across stacks = first in sorted file order wins, loudly logged.
+# ----------------------------------------------------------------------------
+gives:
+  <fleet-name>:
+    is: <capability>@<level>   # the claim — conformance remains the authority
+    at: <in-network url>       # which of MY containers serves it
+    public: <browser url>      # optional
+    check: manifest            # manifest (default) | <probe path> | none
+    labels: { <k>: <v> }       # optional selection properties
+
+# ----------------------------------------------------------------------------
+# USES — what this stack's apps (and adapters) import. Three value forms:
+#
+#   task: blob@mutable              # capability form — kernel picks, verified
+#   task: blob-ipfs                 # name form — a specific give, verified
+#   task:                           # full form
+#     use: blob-s3                  #   either of the above
+#     optional: true                #   unresolved = app degrades, never blocks
+#     with: { ... }                 #   opaque edge config (below)
+#     wire: { <task>: <use-value> } #   per-edge bindings (below)
+# ----------------------------------------------------------------------------
+uses:
+  <app>:
+    <task>: <use-value>
+
+# ----------------------------------------------------------------------------
+# WITH — opaque edge config (space, tenant, ttl, anything adapters document).
+#   - The kernel stores and delivers it VERBATIM; it never validates a key.
+#   - Non-secret values only; secrets always come from the secrets capability.
+#   - Caller identity (<stack>/<app>/<task>) is always delivered alongside;
+#     the isolation default — no space given -> scope by identity — is an
+#     adapter convention built on identity, not kernel schema.
+#
+# WIRE — per-edge capability bindings for a shared service's own needs
+# (e.g. which IdP authenticates THIS app's storage access).
+#   - Values are use-values: resolved AND verified by the kernel like any
+#     bind, recorded on the graph as sub-edges.
+#   - Fallback ladder: edge wire > the adapter stack's own default use
+#     (e.g. auth: { use: identity@core, optional: true }) > unbound-if-optional.
+#
+# WIRE RECURSES — a wire value is a use-value, and use-values may carry
+# with/wire. One grammar, all the way down:
+#
+#     wire:
+#       auth:
+#         use: keycloak-oidc
+#         with: { realm: photos }        # edge config OF THE SUB-EDGE
+#         wire: { store: ldap-main }     # ...and so on, same rules
+#
+#   Semantics at every depth (the SAME rules, recursively):
+#   - each level creates a sub-edge; its identity extends the path:
+#     media/photo-app/blob -> .../blob/auth -> .../blob/auth/store
+#     (adapters pull their slice by that path; everything is on the graph)
+#   - each level's unwired needs fall back to the target's own stack
+#     defaults — the fallback ladder applies per level
+#   - RESPONSIBILITY BOUNDARY: you may only wire what the target service
+#     treats as per-edge-wirable. A service's non-per-edge internals belong
+#     to its OWN stack.yaml uses — a consumer cannot reconfigure another
+#     stack's guts transitively. This keeps trees shallow in practice
+#     (depth 2 is the realistic maximum).
+#   - kernel guardrails: max depth 3, and wiring CYCLES are refused loudly
+#     (a -> b -> a is config drift's ugly cousin, same treatment).
+# ----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+# EDGE DELIVERY — how with/wire reach a SHARED adapter            [RESOLVED]
+# Adapters PULL edge config from the kernel:
+#   1. A consumer's bind creates/updates its edge (graph) with {with, wire}.
+#   2. The consumer's calls carry ONE header, its edge identity:
+#        X-Edge: <stack>/<app>/<task>        (the binder sets it up; KISS)
+#   3. The adapter, on first sight of an edge (then cached, short TTL), asks
+#      the kernel for that edge's {with, resolved wire, identity} — via the
+#      registry core capability it can bind like anything else.
+# Why pull, not push-through-consumer: wire delivers RESOLVED bindings
+# (endpoint+name+verified), too heavy to ride a header honestly; apps stay
+# thin (one header); config changes propagate on cache expiry without
+# touching consumers; and adapters were becoming kernel-aware anyway for
+# the identity era.
+# ----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+# DECLARATION-DRIVEN BINDS (v1 amendment)
+# A bind request may state only (stack, app, task) — capability and level are
+# inherited from the declared use, making stack.yaml the single source of
+# truth (app code names tasks, never repeats capabilities). A request that
+# DOES state capability/level must agree with the declaration (drift refusal,
+# as below). A task with no declaration must state both explicitly.
+# ----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+# RESOLUTION SEMANTICS (all proven in the kernel today)
+#   1. Own gives resolve first, then the fleet (lexical scoping).
+#   2. Conformance verdicts gate EVERY bind: capability form, name form,
+#      and wire targets. A refused path names the verdict.
+#   3. Capability/level drift between a use and the actual request = loud
+#      refusal, never silent resolution.
+#   4. Every use (and every wire sub-edge) renders on the declared graph
+#      with its LIVE resolution; "unresolved" is visible before anything
+#      binds — for optional uses it is informational, not an error.
+# ----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+# WHAT stack.yaml NEVER CONTAINS
+#   - how containers run, images, env, replicas        -> compose.yaml
+#   - an adapter's own instance config                 -> compose env
+#   - secrets                                          -> secrets capability
+#   - placement/deployment                             -> later era (runs: reserved)
+#   - another stack's internals — only give-names ever cross a stack boundary
+# ----------------------------------------------------------------------------
+
+# ============================================================================
+# WORKED EXAMPLES
+# ============================================================================
+# --- stacks/s3/stack.yaml (infra: ONE shared adapter for the whole fleet) ---
+#   version: 1
+#   gives:
+#     blob-s3: { is: blob@mutable, at: http://connector-s3 }
+#     minio:   { is: s3-api@core,  at: http://s3:9000, check: /minio/health/live }
+#   uses:
+#     connector-s3:
+#       backend: minio                                  # own give, by name
+#       auth: { use: identity@core, optional: true }    # fleet default IdP
+#
+# --- stacks/media/stack.yaml (apps only; compose runs no adapters) ---------
+#   version: 1
+#   uses:
+#     photo-app:
+#       blob: { use: blob-s3, with: { space: photos }, wire: { auth: keycloak-oidc } }
+#     admin-app:
+#       blob: { use: blob-s3, wire: { auth: zitadel-oidc } }
+#     doc-app:
+#       blob: { use: blob-ipfs, with: { space: docs } }
+#       mail: { use: mail@core, optional: true }
+#
+# --- stacks/website/stack.yaml (cross-stack consumption) -------------------
+#   version: 1
+#   uses:
+#     site:
+#       docs: { use: blob-ipfs, with: { space: docs } }  # shared space (visible
+#                                                        # coupling), OR prefer:
+#       # docs: documents@core     # once doc-app gives its own domain API
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# IMPLEMENTATION CHECKLIST (kernel deltas once locked — nothing started)
+#   1. loader: stacks/<name>/stack.yaml (gives/uses) replacing provides/needs
+#   2. name-form resolution (use: <give-name>) + capability form (exists)
+#   3. optional: on uses (declared-graph marking; binder already has optional())
+#   4. edge store: persist {with, resolved wire} per (stack,app,task) on bind
+#   5. edge lookup: GET /svc/registry/edge?stack&app&task (core capability op)
+#   6. binder: send X-Edge header; adapters: pull+cache edge config
+#   7. check: field unifying manifest/probe/none (rename of today's probe)
+# ----------------------------------------------------------------------------

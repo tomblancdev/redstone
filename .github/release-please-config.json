@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "pull-request-title-pattern": "chore(main): release ${version} ⚡",
+  "pull-request-header": ":zap: The next circuit, ready to power — merging this PR tags the release, ships the binaries, and the notes below become the release page.",
+  "packages": {
+    ".": {
+      "release-type": "go",
+      "extra-files": [{ "type": "generic", "path": "cmd/redstone/main.go" }],
+      "changelog-sections": [
+        { "type": "feat", "section": "⚡ Features" },
+        { "type": "fix", "section": "🧨 Fixes" },
+        { "type": "perf", "section": "⚡ Performance" },
+        { "type": "refactor", "section": "🔧 Refactoring" },
+        { "type": "docs", "section": "📖 Docs" },
+        { "type": "test", "section": "🧪 Tests" },
+        { "type": "ci", "section": "🤖 CI" },
+        { "type": "chore", "section": "🧹 Chores", "hidden": true }
+      ]
+    }
+  }
+}

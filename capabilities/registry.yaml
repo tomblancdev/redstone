@@ -1,0 +1,15 @@
+# CORE capability — a service of the kernel itself, declared in the same
+# language as everything the kernel manages. Bootstrap tier 0: its address
+# must be known a priori (you cannot bind the registry through the registry),
+# but once known it is cataloged, manifested and conformance-tested like any
+# other instance — which is what keeps the plan honest as it evolves.
+
+capability: registry
+core: true
+plane: control
+
+levels:
+  core:
+    operations: [bind, instances]
+
+flags: {}

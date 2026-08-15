@@ -1,0 +1,13 @@
+# CORE capability — the kernel's record of every binding. Consumers that
+# render or analyze the wiring (dashboards, monitors, auditors) bind THIS,
+# not a kernel URL — so a future graph store swap is invisible to them.
+
+capability: graph
+core: true
+plane: control
+
+levels:
+  core:
+    operations: [edges]
+
+flags: {}

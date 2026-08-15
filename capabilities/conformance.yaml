@@ -1,0 +1,15 @@
+# CORE capability — the verdicts service. Reading verdicts is an operation
+# any consumer may bind (dashboards, deploy gates, robots deciding whether an
+# upgrade is safe). RUNNING verification stays the kernel binary's one-shot
+# subcommand for now — recorded here as the evolution point: a `run` operation
+# at a higher level is where continuous verification would land.
+
+capability: conformance
+core: true
+plane: control
+
+levels:
+  core:
+    operations: [verdicts]
+
+flags: {}

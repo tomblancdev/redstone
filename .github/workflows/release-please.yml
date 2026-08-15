@@ -1,0 +1,62 @@
+# ⚡ the changelog writes itself. release-please reads conventional commits,
+# maintains a release PR (generated CHANGELOG + version bump in main.go);
+# merging that PR tags the release — and the ship job below builds and
+# attaches binaries in the same run (tags created with GITHUB_TOKEN don't
+# trigger other workflows, so shipping happens here, not in release.yml —
+# that one remains for manually pushed tags).
+name: release-please
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.rp.outputs.release_created }}
+      tag_name: ${{ steps.rp.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: rp
+        with:
+          config-file: .github/release-please-config.json
+          manifest-file: .github/.release-please-manifest.json
+
+  ship:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.release-please.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - name: gate
+        run: go vet ./... && go test ./...
+      - name: cross-build
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          GOOS=linux  GOARCH=amd64 go build -trimpath -ldflags '-s -w' -o bin/redstone-linux-amd64 ./cmd/redstone
+          GOOS=linux  GOARCH=arm64 go build -trimpath -ldflags '-s -w' -o bin/redstone-linux-arm64 ./cmd/redstone
+          GOOS=windows GOARCH=amd64 go build -trimpath -ldflags '-s -w' -o bin/redstone-windows-amd64.exe ./cmd/redstone
+          (cd bin && sha256sum redstone-* > checksums.txt)
+      - name: attach binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" bin/redstone-* bin/checksums.txt
+      - name: dress the notes (changelog + redstone footer)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$TAG" --json body -q .body > notes.md
+          cat .github/release-footer.md >> notes.md
+          gh release edit "$TAG" --notes-file notes.md

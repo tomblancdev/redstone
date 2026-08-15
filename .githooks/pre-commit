@@ -1,0 +1,5 @@
+#!/bin/sh
+# ⚡ pressure plate at the door — nothing unpowered gets committed.
+# Installed via: ./dev.sh hooks   (bypass in emergencies: git commit -n,
+# and be ready to explain yourself to CI.)
+exec ./dev.sh check

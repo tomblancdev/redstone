@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://redstone.dev/schemas/stack.schema.json",
+  "title": "Redstone stack file",
+  "description": "One file per stack: what it GIVES the fleet, what its apps USE. Add to any stack.yaml for editor validation: # yaml-language-server: $schema=<path-to>/stack.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "properties": {
+    "version": { "const": 1, "description": "Stack file format version." },
+    "description": { "type": "string" },
+    "gives": {
+      "description": "Exports: fleet-name -> what & where. Only gives are fleet-visible.",
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9][A-Za-z0-9_-]*$": { "$ref": "#/definitions/give" }
+      }
+    },
+    "uses": {
+      "description": "Imports: app -> task -> use-value.",
+      "type": "object",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^[A-Za-z0-9][A-Za-z0-9_-]*$": {
+          "type": "object",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^[A-Za-z0-9][A-Za-z0-9_-]*$": { "$ref": "#/definitions/useValue" }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "give": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["is", "at"],
+      "properties": {
+        "is": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*@[A-Za-z0-9][A-Za-z0-9_-]*$",
+          "description": "The claim: capability@level. Conformance is the authority on whether it holds."
+        },
+        "at": { "type": "string", "description": "In-network base URL (http(s):// or tcp://)." },
+        "public": { "type": "string", "description": "Browser-facing base URL." },
+        "check": {
+          "type": "string",
+          "description": "'manifest' (default, full envelope cross-check) | a probe path starting with / (liveness GET) | 'none' (unprobeable by design).",
+          "pattern": "^(manifest|none|/.*)$"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Free-form selection properties."
+        }
+      }
+    },
+    "useValue": {
+      "description": "String form: 'capability@level' (kernel picks, verified) or a give-name (pin, verified too). Object form adds optional/with/wire.",
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(@[A-Za-z0-9][A-Za-z0-9_-]*)?$"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "use": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(@[A-Za-z0-9][A-Za-z0-9_-]*)?$"
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "true: unresolved degrades the app instead of blocking it."
+            },
+            "with": {
+              "type": "object",
+              "description": "Opaque edge config (space, tenant, ttl...). The kernel delivers it verbatim and never interprets a key. Non-secret values only."
+            },
+            "wire": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Per-edge capability bindings for the service's own needs. Values are use-values — one grammar, recursive (kernel enforces max depth 3, refuses cycles).",
+              "patternProperties": {
+                "^[A-Za-z0-9][A-Za-z0-9_-]*$": { "$ref": "#/definitions/useValue" }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

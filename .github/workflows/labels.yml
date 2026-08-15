@@ -1,0 +1,23 @@
+# ⚡ syncs GitHub labels to .github/labels.yml — declarative, delete-included.
+# Runs only when the label file (or this workflow) changes.
+name: labels
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/labels.yml"
+      - ".github/workflows/labels.yml"
+
+permissions:
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: crazy-max/ghaction-github-labeler@v5
+        with:
+          yaml-file: .github/labels.yml
+          skip-delete: false
+          dry-run: false

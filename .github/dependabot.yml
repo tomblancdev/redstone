@@ -1,0 +1,12 @@
+# The robot that does the upgrades — weekly, small, boring. Exactly how
+# dependency bumps should be.
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

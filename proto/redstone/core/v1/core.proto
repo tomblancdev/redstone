@@ -1,0 +1,143 @@
+// The CORE protocol — the one surface every service, in every language, must
+// speak to participate in the graph. This is the only proto in the stack.
+//
+// Capabilities themselves stay FLAT on purpose: a capability is a YAML spec
+// (capabilities/<name>.yaml: ladder, plane, flags) plus a conformance pack.
+// Their payloads ride plain HTTP+JSON and are validated behaviorally, not by
+// schema. Typing the wiring and keeping capabilities loose is the deal that
+// keeps "add a capability" cheap while making "join the graph" mechanical.
+//
+// Wire rule: JSON uses the proto FIELD NAMES (snake_case) — exactly what the
+// running services emit. Transport is HTTP+JSON today (routes in comments);
+// the service block generates gRPC/Connect stubs the day a second transport
+// is wanted, with these same messages.
+syntax = "proto3";
+
+package redstone.core.v1;
+
+import "google/protobuf/struct.proto";
+
+// ---------------------------------------------------------------- register
+
+service RegisterService {
+  // GET /bind?capability=&level=[&name=][&label.k=v][&consumer=][&as=]
+  //   200 -> BindResponse    409 -> BindRefusal    400 -> bad request
+  rpc Bind(BindRequest) returns (BindResponse);
+  // GET /instances
+  rpc ListInstances(ListInstancesRequest) returns (ListInstancesResponse);
+  // GET /graph
+  rpc GetGraph(GetGraphRequest) returns (GetGraphResponse);
+}
+
+message BindRequest {
+  string capability = 1;
+  string level = 2;
+  // Pin a specific instance by name (deliberate coupling, still location-free).
+  string name = 3;
+  // Label selectors; HTTP encodes each as label.<key>=<value>.
+  map<string, string> labels = 4;
+  // Who is binding, and under which local alias — feeds the graph.
+  string consumer = 5;
+  string as = 6;
+  // Which stack the consumer runs in. Wiring is resolved per stack, so the
+  // same app deployed in two stacks can be routed differently.
+  string stack = 7;
+}
+
+message BindResponse {
+  string name = 1;
+  string capability = 2;
+  string requested_level = 3;
+  // Conformance verdict when one exists, otherwise the registry claim.
+  string effective_level = 4;
+  // true = a conformance pack has verified this instance.
+  bool verified = 5;
+  // In-network base URL — what the consumer calls.
+  string endpoint = 6;
+  // Browser-facing base URL.
+  string public = 7;
+  string implementation = 8;
+  // Capability-specific flags, deliberately untyped here: their meaning
+  // belongs to the flat capability spec, not to the core protocol.
+  google.protobuf.Struct flags = 9;
+}
+
+message BindRefusal {
+  string error = 1;
+  repeated Candidate candidates = 2;
+}
+
+message Candidate {
+  string name = 1;
+  // Why this candidate was rejected ("claims mutable, conformance verified
+  // only core", "label cost=unset, wanted low", "unreachable", ...).
+  string reason = 2;
+}
+
+message Instance {
+  string name = 1;
+  string capability = 2;
+  // The registry claim. Level belongs to the INSTANCE, not the technology.
+  string level = 3;
+  string endpoint = 4;
+  string public = 5;
+  map<string, string> labels = 6;
+  bool verified = 7;
+  string effective_level = 8;
+}
+
+message ListInstancesRequest {}
+
+message ListInstancesResponse {
+  repeated Instance instances = 1;
+}
+
+message BindEdge {
+  string consumer = 1;
+  string as = 2;
+  string capability = 3;
+  string level = 4;
+  string instance = 5;
+  bool verified = 6;
+  // RFC3339, or "declared" for edges synthesized from the catalog.
+  string at = 7;
+  string stack = 8;
+}
+
+message GetGraphRequest {}
+
+message GetGraphResponse {
+  repeated BindEdge edges = 1;
+}
+
+// -------------------------------------------------------------- discovery
+
+// Every participant answers GET /manifest with this envelope, whatever its
+// capability. The register cross-checks `capability` at bind time.
+message Manifest {
+  string name = 1;
+  string version = 2;
+  // "connector" | "app"
+  string kind = 3;
+  string capability = 4;
+  // The software's default level — informational. The instance's claim lives
+  // in the registry and conformance is the authority.
+  string level = 5;
+  // Backing technology ("s3", "ipfs", "smtp", "openbao", ...).
+  string implementation = 6;
+  google.protobuf.Struct flags = 7;
+}
+
+// ------------------------------------------------------------- data plane
+
+// The broker pattern itself: directions to bytes, for ANY data-plane
+// capability. GET .../resolve?mode=read|write&audience=public|internal
+// The client connects to `url` directly; bytes never cross a broker.
+message Descriptor {
+  string url = 1;
+  // "GET" | "PUT"
+  string method = 2;
+  map<string, string> headers = 3;
+  // RFC3339, or absent: never expires (content-addressed backends).
+  optional string expires_at = 4;
+}

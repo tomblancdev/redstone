@@ -1,0 +1,12 @@
+█▀▄ █▀▀ █▀▄ █▀▀ ▀█▀ █▀█ █▄ █ █▀▀
+█▀▄ █▀▀ █ █ ▀▀█  █  █ █ █ ▀█ █▀▀
+▀ ▀ ▀▀▀ ▀▀▀ ▀▀▀  ▀  ▀▀▀ ▀  ▀ ▀▀▀
+●━━━●━━⚡━━●  the wiring layer  ●━━⚡━━●━━━●
+
+--- pure-ASCII fallback (dumb terminals, code comments) ---
+
+o--o--[ REDSTONE ]--o--o  the wiring layer
+
+--- section divider ---
+
+●━━━●━━⚡━━●━━━●

@@ -1,0 +1,20 @@
+#!/bin/sh
+# ⚡ the commit IS the changelog — malformed messages don't get in.
+# (Bypass in emergencies: git commit -n, and be ready to explain to the
+# release notes why they're missing a line.)
+msg="$(head -n1 "$1")"
+
+case "$msg" in
+  Merge\ *|Revert\ *|fixup!\ *|squash!\ *) exit 0 ;;
+esac
+
+if echo "$msg" | grep -qE '^(feat|fix|docs|test|refactor|perf|chore|ci)(\([a-z0-9-]+\))?!?: .+'; then
+  exit 0
+fi
+
+echo "🧨 not a conventional commit: \"$msg\""
+echo "   format: type(scope): description"
+echo "   types:  feat fix docs test refactor perf chore ci"
+echo "   scopes: bind verify validate cli graph wire proto vibe sdk"
+echo "   your commits become the changelog — see .github/CONTRIBUTING.md"
+exit 1

@@ -1,0 +1,29 @@
+# ⚡ py sdk — runs ONLY when sdk/py changes. Proto changes ride along
+# naturally: regeneration commits into sdk/py/redstone_sdk/_gen.
+name: sdk-py
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sdk/py/**"
+      - ".github/workflows/sdk-py.yml"
+  pull_request:
+    paths:
+      - "sdk/py/**"
+      - ".github/workflows/sdk-py.yml"
+
+jobs:
+  py:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: sdk/py/pyproject.toml
+      - name: install + load
+        working-directory: sdk/py
+        run: |
+          pip install --quiet .
+          python -c "import redstone_sdk; print('⚡ py sdk loads, header =', redstone_sdk.Binding('','','',False,'','','t','ci/smoke/t').header())"
