@@ -29,6 +29,10 @@ redstone rm         break a stack (refuses while circuits still draw power)
 
 ## Quickstart
 
+Install like docker: one static binary on your `PATH` — grab a [release
+build](https://github.com/tomblancdev/redstone/releases) (or the ghcr
+image); install & update paths in [docs/install.md](docs/install.md).
+
 ```sh
 redstone validate --registry ./registry --caps ./capabilities
 redstone serve    --dir ./registry --caps ./capabilities \
@@ -55,6 +59,7 @@ uses:
 
 | Doc | What it explains |
 |---|---|
+| [docs/install.md](docs/install.md) | install from a release build (or docker/ghcr), updates, rollback |
 | [docs/concepts.md](docs/concepts.md) | capabilities & levels, conformance, the graph, stacks, `with`/`wire` |
 | [docs/architecture.md](docs/architecture.md) | state files, the bind pipeline, transports, failure semantics |
 | [docs/stack-spec.yaml](docs/stack-spec.yaml) | the locked stack-file format, annotated |
