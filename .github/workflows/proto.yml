@@ -26,7 +26,11 @@ jobs:
       - name: breaking (the wire is frozen)
         if: github.event_name == 'pull_request'
         working-directory: proto
-        run: buf breaking --against "../.git#branch=${{ github.base_ref }},subdir=proto"
+        # PR checkouts have the base only as a remote ref; buf clones the
+        # local .git and needs a real branch — materialize it first.
+        run: |
+          git fetch origin "${{ github.base_ref }}:${{ github.base_ref }}"
+          buf breaking --against "../.git#branch=${{ github.base_ref }},subdir=proto"
       - name: stubs in sync (gen/ and sdk/py/_gen match the proto)
         working-directory: proto
         run: |
