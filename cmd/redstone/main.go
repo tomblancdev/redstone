@@ -40,7 +40,7 @@ const banner = `█▀▄ █▀▀ █▀▄ █▀▀ ▀█▀ █▀█ █�
 ●━━━●━━⚡━━●  the wiring layer  ●━━⚡━━●━━━●`
 
 // Bumped by release-please on release PRs — never by hand.
-const version = "0.1.0" // x-release-please-version
+const version = "0.2.0" // x-release-please-version
 
 func main() {
 	if len(os.Args) < 2 {
