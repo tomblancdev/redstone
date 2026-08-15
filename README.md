@@ -29,9 +29,13 @@ redstone rm         break a stack (refuses while circuits still draw power)
 
 ## Quickstart
 
-Install like docker: one static binary on your `PATH` — grab a [release
-build](https://github.com/tomblancdev/redstone/releases) (or the ghcr
-image); install & update paths in [docs/install.md](docs/install.md).
+Install like docker — one line, one static binary on your `PATH`,
+checksum-verified (all paths incl. windows, pinning and the ghcr image in
+[docs/install.md](docs/install.md)):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/tomblancdev/redstone/main/scripts/install.sh | sh
+```
 
 ```sh
 redstone validate --registry ./registry --caps ./capabilities

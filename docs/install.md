@@ -15,7 +15,38 @@ Every release ships static builds — `redstone-linux-amd64`,
 `checksums.txt`. Grab, verify, place on `PATH`, done:
 <https://github.com/tomblancdev/redstone/releases>
 
-### Linux
+### The one-liner
+
+Linux:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/tomblancdev/redstone/main/scripts/install.sh | sh
+```
+
+Windows (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/tomblancdev/redstone/main/scripts/install.ps1 | iex
+```
+
+Latest release by default, always verified against `checksums.txt` before
+it is placed. Pin a version or pick the directory:
+
+```sh
+curl -fsSL .../install.sh | sh -s -- --version v0.1.0
+REDSTONE_INSTALL=$HOME/.local/bin  curl -fsSL .../install.sh | sh
+```
+
+```powershell
+$env:REDSTONE_VERSION = "v0.1.0"; irm .../install.ps1 | iex
+$env:REDSTONE_INSTALL = "C:\Tools"; irm .../install.ps1 | iex   # custom dirs are left off PATH
+```
+
+The linux script installs to `/usr/local/bin` (sudo only if needed); the
+windows script installs to `%LOCALAPPDATA%\Programs\redstone` and adds it
+to your user `PATH`.
+
+### By hand — Linux
 
 ```sh
 V=v0.1.0    # pick a version from the releases page
@@ -28,7 +59,7 @@ redstone version
 
 arm64: same steps with `redstone-linux-arm64`.
 
-### Windows (PowerShell)
+### By hand — Windows (PowerShell)
 
 ```powershell
 $V = "v0.1.0"
@@ -86,6 +117,8 @@ An update is a **binary swap**. State (`stacks/`, `conformance.yaml`,
 1. Read the release notes ([CHANGELOG](../CHANGELOG.md)) for the jump you
    are making.
 2. Download the new build and verify checksums — same steps as install.
+   **The install script is also the updater**: run the one-liner again and
+   it fetches the latest (or `--version`) and swaps the binary in place.
 3. Stop `redstone serve`, replace the binary, start it again.
 4. Confirm the circuit: `redstone version`, then `redstone validate`
    (still lints clean?) and `redstone verify` (verdicts corrode — re-test
