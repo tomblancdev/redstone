@@ -16,3 +16,10 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+  - package-ecosystem: npm
+    directory: /sdk/js
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
