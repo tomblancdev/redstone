@@ -14,7 +14,7 @@
   "files": ["index.mjs", "index.d.mts"],
   "license": "MIT",
   "dependencies": {
-    "@grpc/grpc-js": "^1.12.0",
+    "@grpc/grpc-js": "^1.14.6",
     "@grpc/proto-loader": "^0.8.1"
   }
 }
